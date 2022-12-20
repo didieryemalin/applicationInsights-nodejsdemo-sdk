@@ -98,7 +98,7 @@ router.post('/emailTasks', function(req, res, next){
       console.log("About to send tasks to email processor");
       client.trackTrace({message: "About to send tasks to email processor"});
 
-      axios.post(process.env.EMAIL_SERVICE_URL, { 
+      axios.post(process.env.TASK_PROCESSOR_URL, { 
         emailAddress: emailAddress, 
         currentTasks: currentTasks, 
         completedTasks: completedTasks 
