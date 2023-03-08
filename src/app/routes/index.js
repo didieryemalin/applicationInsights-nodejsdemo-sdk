@@ -14,6 +14,7 @@ router.get('/', function(req, res, next) {
       const currentTasks = tasks.filter(task => !task.completed);
       const completedTasks = tasks.filter(task => task.completed === true);
 
+      client.trackEvent({name: "homepage loaded"})
       client.trackTrace({message: "loading home page"});
 
       console.log(`Total tasks: ${tasks.length}   Current tasks: ${currentTasks.length}    Completed tasks:  ${completedTasks.length}`)
@@ -37,6 +38,7 @@ router.post('/addTask', function(req, res, next) {
   console.log(`Adding a new task ${taskName} - createDate ${createDate}`)
 
   client.trackTrace({message: `Adding a new task ${taskName} - createDate ${createDate}`});
+  client.trackEvent({name: "new task added"});
 
   task.save()
       .then(() => { 
@@ -53,6 +55,7 @@ router.post('/completeTask', function(req, res, next) {
   const taskId = req.body._id;
   const completedDate = Date.now();
 
+  client.trackEvent({name: "new task completed"})
   client.trackTrace({message: `Completing task ${taskId}`});
 
   Task.findByIdAndUpdate(taskId, { completed: true, completedDate: Date.now()})
@@ -70,6 +73,7 @@ router.post('/deleteTask', function(req, res, next) {
   const taskId = req.body._id;
   const completedDate = Date.now();
 
+  client.trackEvent({name: "new task deleted"})
   client.trackTrace({message: `Deleting task ${taskId}`});
 
   Task.findByIdAndDelete(taskId)
@@ -95,16 +99,17 @@ router.post('/emailTasks', function(req, res, next){
 
       console.log(`Total tasks: ${tasks.length}   Current tasks: ${currentTasks.length}    Completed tasks:  ${completedTasks.length}`)
       
-      console.log("About to send tasks to email processor");
-      client.trackTrace({message: "About to send tasks to email processor"});
+      console.log("About to send tasks to task processor API");
+      client.trackEvent({name: "new task processor API request sent"});
+      client.trackTrace({message: "About to send tasks to task processor API"});
 
-      axios.post(process.env.EMAIL_SERVICE_URL, { 
+      axios.post(process.env.TASK_PROCESSOR_URL, { 
         emailAddress: emailAddress, 
         currentTasks: currentTasks, 
         completedTasks: completedTasks 
       })
       .then(function(response){
-        console.log("Tasks sent to Email Service")
+        console.log("Tasks sent to task processor API")
       })
       .catch(function(error){
         console.log(error);
