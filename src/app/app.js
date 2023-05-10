@@ -12,6 +12,7 @@ appInsights
   .setUseDiskRetryCaching(true)
   .setSendLiveMetrics(true)
   .setDistributedTracingMode(appInsights.DistributedTracingModes.AI)
+  .setInternalLogging(true, true)
   .start();
 
 var createError = require("http-errors");
