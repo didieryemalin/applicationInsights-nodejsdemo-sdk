@@ -1,1 +1,0 @@
-# applicationInsights-nodejsdemo-sdk
