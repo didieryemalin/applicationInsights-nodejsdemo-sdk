@@ -2,6 +2,9 @@ var express = require('express');
 const axios = require('axios');
 var Task = require('../models/task');
 
+let appInsights = require("applicationinsights");
+let client = appInsights.defaultClient;
+
 var router = express.Router();
 
 /* GET home page. */
@@ -10,6 +13,9 @@ router.get('/', function(req, res, next) {
     .then((tasks) => {      
       const currentTasks = tasks.filter(task => !task.completed);
       const completedTasks = tasks.filter(task => task.completed === true);
+
+      client.trackEvent({name: "homepage loaded"})
+      client.trackTrace({message: "loading home page"});
 
       console.log(`Total tasks: ${tasks.length}   Current tasks: ${currentTasks.length}    Completed tasks:  ${completedTasks.length}`)
       res.render('index', { currentTasks: currentTasks, completedTasks: completedTasks, emailServiceResponse: 'Not sent' });
@@ -31,6 +37,9 @@ router.post('/addTask', function(req, res, next) {
   });
   console.log(`Adding a new task ${taskName} - createDate ${createDate}`)
 
+  client.trackTrace({message: `Adding a new task ${taskName} - createDate ${createDate}`});
+  client.trackEvent({name: "new task added"});
+
   task.save()
       .then(() => { 
         console.log(`Added new task ${taskName} - createDate ${createDate}`)        
@@ -46,8 +55,11 @@ router.post('/completeTask', function(req, res, next) {
   const taskId = req.body._id;
   const completedDate = Date.now();
 
+  client.trackEvent({name: "new task completed"})
+  client.trackTrace({message: `Completing task ${taskId}`});
+
   Task.findByIdAndUpdate(taskId, { completed: true, completedDate: Date.now()})
-    .then(() => { 
+    .then(() => {
       console.log(`Completed task ${taskId}`)
       res.redirect('/'); }  )
     .catch((err) => {
@@ -60,6 +72,10 @@ router.post('/completeTask', function(req, res, next) {
 router.post('/deleteTask', function(req, res, next) {
   const taskId = req.body._id;
   const completedDate = Date.now();
+
+  client.trackEvent({name: "new task deleted"})
+  client.trackTrace({message: `Deleting task ${taskId}`});
+
   Task.findByIdAndDelete(taskId)
     .then(() => { 
       console.log(`Deleted task $(taskId)`)      
@@ -83,21 +99,20 @@ router.post('/emailTasks', function(req, res, next){
 
       console.log(`Total tasks: ${tasks.length}   Current tasks: ${currentTasks.length}    Completed tasks:  ${completedTasks.length}`)
       
-      console.log("About to email tasks");
-      
-      const currentTasksSummary = getTasksSummary(currentTasks);
-      const completedTasksSummary = getTasksSummary(completedTasks);
+      console.log("About to send tasks to task processor API");
+      client.trackEvent({name: "new task processor API request sent"});
+      client.trackTrace({message: "About to send tasks to task processor API"});
 
-      axios.post(process.env.EMAIL_SERVICE_URL, { 
-          emailAddress: emailAddress, 
-          currentTasks: currentTasksSummary, 
-          completedTasks: completedTasksSummary 
-        })
-        .then(function(response){
-          //console.log(response);
-        })
-        .catch(function(error){
-          console.log(error);
+      axios.post(process.env.TASK_PROCESSOR_URL, { 
+        emailAddress: emailAddress, 
+        currentTasks: currentTasks, 
+        completedTasks: completedTasks 
+      })
+      .then(function(response){
+        console.log("Tasks sent to task processor API")
+      })
+      .catch(function(error){
+        console.log(error);
       });
 
       res.redirect('/');
@@ -108,16 +123,5 @@ router.post('/emailTasks', function(req, res, next){
     });
   }
 });
-
-function getTasksSummary(tasks){
-  let tasksSummary = "";
-
-  for(let i = 0; i < tasks.length; i++){
-    tasksSummary = (i == (tasks.length - 1)) ? (tasksSummary + tasks[i].taskName) : (tasksSummary + `${tasks[i].taskName}, `)
-  }
-  
-  console.log(tasksSummary);
-  return tasksSummary;
-};
 
 module.exports = router;
