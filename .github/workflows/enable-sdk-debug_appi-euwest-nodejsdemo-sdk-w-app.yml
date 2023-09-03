@@ -52,5 +52,5 @@ jobs:
         with:
           app-name: 'appi-euwest-nodejsdemo-sdk-w-app'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_DF12B18F13DA4802975B870BAE7FBFB1 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_2C78817B2C9445BE8F9233BEDEEEF8C2 }}
           package: .
